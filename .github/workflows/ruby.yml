@@ -1,0 +1,61 @@
+name: Ruby
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby-version: ['3.0']
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup gem credentials
+      run: |
+        mkdir -p $HOME/.gem
+        touch $HOME/.gem/credentials
+        chmod 0600 $HOME/.gem/credentials
+        printf -- "---\n:github: ${GEM_HOST_API_KEY}\n" > $HOME/.gem/credentials
+        touch $HOME/.gemrc
+        chmod 0600 $HOME/.gemrc
+        printf -- "---\n:backtrace: false\n:bulk_threshold: 1000\n:sources:\n- https://rubygems.org/\n- https://ah450:${GEM_TOKEN}@rubygems.pkg.github.com/Bynar-Systems/\n:update_sources: true\n:verbose: true" > $HOME/.gemrc
+        
+      env:
+        GEM_HOST_API_KEY: "Bearer ${{ secrets.GEMS_TOKEN }}"
+        GEM_TOKEN: ${{ secrets.GEMS_TOKEN }}
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@473e4d8fe5dd94ee328fdfca9f8c9c7afc9dae5e
+      with:
+        ruby-version: ${{ matrix.ruby-version }}
+        bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+      env:
+        BUNDLE_RUBYGEMS__PKG__GITHUB__COM: ah450:${{secrets.GEMS_TOKEN}}
+    - name: 'Prepare db'
+      run: |
+        cd test/dummy && bundle e rake db:create && bundle e rake db:migrate
+    - name: 'Run tests'
+      run: |
+        bundle e rake
+    - name: 'Publish gem'
+      run: |
+        gem build *.gemspec
+        gem push --key github *.gem
+    - name: Run Discord Success webhook
+      uses: rjstone/discord-webhook-notify@v1.0.4
+      if: success()
+      with:
+        severity: info
+        details: Test Succeeded!
+        webhookUrl: ${{ secrets.DISCORD_WEBHOOK_URL }}
+    - name: Run Discord Failure webhook
+      uses: rjstone/discord-webhook-notify@v1.0.4
+      if: failure()
+      with:
+        severity: error
+        details: Test Failed!
+        webhookUrl: ${{ secrets.DISCORD_WEBHOOK_URL }}
+    
