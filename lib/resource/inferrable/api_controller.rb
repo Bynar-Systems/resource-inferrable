@@ -73,13 +73,19 @@ module Resource
         :created_at
       end
 
+      # defaults to plural.as_json
+      # Override to perhaps include nested resources or to customize as needed
+      def plural_resources_as_json
+        instance_variable_get(plural_resource_variable).as_json
+      end
+
       def render_multiple
         resources = instance_variable_get(plural_resource_variable)
         render json: {
           page: resources.current_page,
           total_pages: resources.total_pages,
           page_size: resources.size,
-          "#{resource_name.pluralize}": resources.as_json
+          "#{resource_name.pluralize}": plural_resources_as_json
         }
       end
     end
