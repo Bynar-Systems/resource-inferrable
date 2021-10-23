@@ -13,9 +13,9 @@ module Resource
       end
 
       # The singular resource name based on controller name
-      # Override in controllers with non conventional names
+      # Override in controllers with non conventional names, make sure to underscore the name to avoid potential issues
       def resource_name
-        @resource_name ||= controller_name.singularize
+        @resource_name ||= controller_name.singularize.underscore
       end
 
       # Sets resource based on id param
