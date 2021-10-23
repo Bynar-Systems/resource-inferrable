@@ -44,18 +44,12 @@ jobs:
       run: |
         gem build *.gemspec
         gem push --key github *.gem
-    - name: Run Discord Success webhook
-      uses: rjstone/discord-webhook-notify@v1.0.4
-      if: success()
+    - name: slack
+      uses: act10ns/slack@v1.2.2
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
       with:
-        severity: info
-        details: Test Succeeded!
-        webhookUrl: ${{ secrets.DISCORD_WEBHOOK_URL }}
-    - name: Run Discord Failure webhook
-      uses: rjstone/discord-webhook-notify@v1.0.4
-      if: failure()
-      with:
-        severity: error
-        details: Test Failed!
-        webhookUrl: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        status: ${{ job.status }}
+        steps: ${{ toJson(steps) }}
+        channel: '#bots-ci'
     
