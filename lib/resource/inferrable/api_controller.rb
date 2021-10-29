@@ -6,14 +6,14 @@ module Resource
       include Resource::Inferrable::Concern
       # GET /{resource_name}/:id
       def show
-        render json: signular_resource_as_json
+        render json: singular_resource_as_json
       end
 
       # POST /{plural_resource_name}
       def create
         infer_resource(resource_class.new(resource_params))
         if resource.save
-          render json: signular_resource_as_json, status: :created
+          render json: singular_resource_as_json, status: :created
         else
           render json: resource.errors, status: :unprocessable_entity
         end
@@ -38,7 +38,7 @@ module Resource
       # PATCH/PUT /{resource_name}/:id
       def update
         if infer_resource.update(resource_params)
-          render json: signular_resource_as_json
+          render json: singular_resource_as_json
         else
           render json: infer_resource.errors, status: :unprocessable_entity
         end
@@ -79,7 +79,7 @@ module Resource
         instance_variable_get(plural_resource_variable).as_json
       end
 
-      def signular_resource_as_json
+      def singular_resource_as_json
         resource.as_json
       end
 
